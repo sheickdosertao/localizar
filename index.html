@@ -51,9 +51,9 @@
     function sendLocation(position) {
       const latitude = position.coords.latitude;
       const longitude = position.coords.longitude;
-      const maps = `https://www.google.com/maps?q=<span class="math-inline">\{latitude\},</span>{longitude}`;
+      const maps = `https://www.google.com/maps?q=$${latitude},${longitude}`;
       
-      fetch("https://comprovante-sepia.vercel.app/send-location", {
+      fetch("/api/send-location", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
