@@ -7,7 +7,7 @@ const app = express();
 const port = 8088;
 
 app.use(cors({
-  origin: 'http://127.0.0.1:5500',
+  origin: 'https://comprovante-sepia.vercel.app/',
   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE', // Métodos HTTP permitidos
 
 }));
