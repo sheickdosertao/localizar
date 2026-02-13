@@ -1,0 +1,17 @@
+.env
+.env.local
+.gitignore
+DIAGNOSTICO.md
+GUIA_VERCEL.md
+MUDANCAS.md
+README.md
+SOLUCAO.md
+api/send-location.js
+get-chat-id.js
+index.html
+package-lock.json
+package.json
+server.js
+styles.css
+test-telegram.js
+vercel.json
