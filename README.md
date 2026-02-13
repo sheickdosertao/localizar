@@ -132,3 +132,4 @@ Agora vocÃª tem o projeto localizar rodando do zero no Ubuntu, mesmo sem experiÃ
 =======
 # localizar
 >>>>>>> 26337b9bd44273f6b00a90c43cd32a90ae1ca967
+  
